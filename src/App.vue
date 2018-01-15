@@ -1,23 +1,26 @@
 <template>
   <div class="app-box" :class="{loading: loading}">
     <div class="list">
-      <TreeSelect dataUrl="http://192.168.34.231/odbc.php" @onCheck="updateData" @loadFinish="loadData" :radio="true" />
+      <TreeSelect dataUrl="http://192.168.30.133/odbc.php" @onCheck="updateData" @loadFinish="loadData" :radio="true" />
     </div>
     <div class="chart-box">
       <Chart ref="chart" :opt="chartData" />
       <div class="table-box">
         <div class="button-box">
-          <div class="button" v-for="(item, index) in dataSave" :key="index" @click="listClick(index)">{{index}}</div>
+          <div class="button" v-for="item in tableList" :key="item" @click="listClick(item)">{{item}}</div>
         </div>
-        <table class="table">
+        <table class="table" v-if="tableData">
           <tr>
             <th>批号</th>
-            <th colspan="4">sdsdsd-2332</th>
+            <th colspan="4">{{tableTitle}}</th>
           </tr>
           <tr v-for="(item, index) in tableData" :key="index">
             <th v-for="(itemChild, ind) in item" :key="ind">{{itemChild}}</th>
           </tr>
         </table>
+        <div v-else class="empty">
+          数据未统计！
+        </div>
       </div>
     </div>
     <div class="loading-box">
@@ -51,6 +54,8 @@ export default {
       animation: false,
       tooltipData: [],
       loading: true,
+      tableTitle: '',
+      tableList: [],
       tableData: null,
       a: '组件已过期!',
       chartData: {
@@ -177,6 +182,8 @@ export default {
         if (res.ok) { // 请求成功执行回掉
           res.json().then((data) => {
             fn(data)
+          }, (err) => {
+            fn({})
           })
         } else if (res.status === 401) {
           alert('Oops! You are not authorized.')
@@ -233,7 +240,7 @@ export default {
       }
     },
     updateData (e) {
-      this.loading = true
+      this.$refs.chart.chart.showLoading()
       // 判断是否选中
       const checkList = []
       // 判断是否超过时间
@@ -255,6 +262,8 @@ export default {
       let xAxisMax = 0
       let chartServerData = []
       // console.log(dataCopy)
+      // 清空表格列表
+      this.tableList = []
       checkList.forEach(element => {
         // console.log(element)
         // 判断数据是否不存在
@@ -262,13 +271,19 @@ export default {
           const dataName = element[1]
           // 如果数据不存在则向后端请求数据
           const sendData = { class: element[0], name: dataName, time: new Date().getTime() / 1000 }
-          this.post('http://192.168.34.231/odbcData.php', JSON.stringify(sendData), (response) => {
+          this.post('http://192.168.30.133/odbcData.php', JSON.stringify(sendData), (response) => {
+            // 空数据处理
+            if (!response.batch) {
+              console.log('sdsdsd')
+              return
+            }
             this.tooltipData.push({"batch": response.batch, "time": response.time})
             // console.log(JSON.stringify(this.tooltipData))
             response.batch = null
             response.time = null
             this.dataSave[element[0] + '&&' + element[1]] = response
-            console.log(response.data)
+            // 增加表格列表
+            this.tableList.push(element[0] + '&&' + element[1])
             // 待优化
             chartServerData = chartServerData.concat(response.data)
             // console.log(response)
@@ -290,7 +305,7 @@ export default {
               // console.log(dataCopy)
               dataCopy.legend.data = legendList
               this.$refs.chart.chart.setOption(dataCopy, true)
-              this.loading = false
+              this.$refs.chart.chart.hideLoading()
             }
           })
         } else {
@@ -322,19 +337,16 @@ export default {
     loadData () {
       const data = {"checked":true,"target":{"label":"07670301-A","checked":true},"checkedList":[{"label":"1#-2017","children":[{"label":"07670301-A","checked":true},{"label":"07670403-B"},{"label":"07670501-B"},{"label":"07670502-B"},{"label":"07670503-B"},{"label":"07670603-A"},{"label":"07670604-A"},{"label":"07670606A"},{"label":"07670701A"},{"label":"07670802A"},{"label":"07670803A"},{"label":"07671101B"},{"label":"07671101YA"},{"label":"07671102B"},{"label":"07671102YA"},{"label":"07671103YA"},{"label":"08271101Y"},{"label":"08271105Y"},{"label":"08271106Y"},{"label":"08370902Y"},{"label":"08371001Y"},{"label":"20170520"},{"label":"4-1满载测试01"},{"label":"4-1满载测试02"},{"label":"4-1满载测试03"}]},{"label":"2#-2017","children":[{"label":"07670301-B"},{"label":"4-2满载测试01"},{"label":"4-2满载测试02"},{"label":"4-2满载测试03"},{"label":"SIP-20160926"}]},{"label":"3#-2017","children":[{"label":"07670202Y-A"},{"label":"07670203Y-A"},{"label":"07670401-A"},{"label":"07670402-A"},{"label":"07670403-A"},{"label":"07670404-A"},{"label":"07670405-A"},{"label":"07670501-A"},{"label":"07670502-A"},{"label":"07670601-A"},{"label":"07670602-B"},{"label":"07670603-A"},{"label":"07670604-A"},{"label":"07670605A"},{"label":"07670606A"},{"label":"07670701A"},{"label":"07670801A"},{"label":"07670802A"},{"label":"07670803A"},{"label":"07670804A"},{"label":"07671101YA"},{"label":"4-3满载测试01"},{"label":"4-3满载测试02"},{"label":"4-3满载测试03"}]},{"label":"4#-2017","children":[{"label":"07670203Y-B"},{"label":"07670401-B"},{"label":"07670402-B"},{"label":"07670404-B"},{"label":"07670405-B"},{"label":"07670501-B"},{"label":"07670502-B"},{"label":"07670503-B"},{"label":"07670601-B"},{"label":"07670602-A"},{"label":"07670603-B"},{"label":"07670604-B"},{"label":"07670605B"},{"label":"07670606B"},{"label":"07670701B"},{"label":"07670801B"},{"label":"07670802B"},{"label":"07670803B"},{"label":"07670804B"},{"label":"07671101A"},{"label":"07671101YB"},{"label":"07671102A"},{"label":"07671102YB"},{"label":"07671103YB"},{"label":"08371001YA"},{"label":"4-4满载测试01"},{"label":"4-4满载测试02"},{"label":"4-4满载测试03"},{"label":"注射用奥扎格雷钠"}]}],"parent":{"label":"1#-2017","children":[{"label":"07670301-A","checked":true},{"label":"07670403-B"},{"label":"07670501-B"},{"label":"07670502-B"},{"label":"07670503-B"},{"label":"07670603-A"},{"label":"07670604-A"},{"label":"07670606A"},{"label":"07670701A"},{"label":"07670802A"},{"label":"07670803A"},{"label":"07671101B"},{"label":"07671101YA"},{"label":"07671102B"},{"label":"07671102YA"},{"label":"07671103YA"},{"label":"08271101Y"},{"label":"08271105Y"},{"label":"08271106Y"},{"label":"08370902Y"},{"label":"08371001Y"},{"label":"20170520"},{"label":"4-1满载测试01"},{"label":"4-1满载测试02"},{"label":"4-1满载测试03"}]}}
       this.updateData(data)
+      this.loading = false
     },
     listClick (item) {
       const data = item.split('&&')
+      // 增加到表格标题
+      this.tableTitle = data[1]
       const sendData = { class: data[0], name: data[1] }
-      this.post('http://192.168.34.231/content.php', JSON.stringify(sendData), (response) => {
-        if (response) {
-          let saveData = [
-            [" "],
-            ["开始时间"],
-            ["结束时间"],
-            ["总用时"],
-            ["占比"]
-          ]
+      this.post('http://192.168.30.133/content.php', JSON.stringify(sendData), (response) => {
+        if (response && JSON.stringify(response) !== '{}') {
+          let saveData = [ [" "], ["开始时间"], ["结束时间"], ["总用时"], ["占比"] ]
           const totalTime = new Date(response["总批次"].endTime).getTime() - new Date(response["总批次"].startTime).getTime()
           for (let item in response) {
             const itemData = response[item]
@@ -348,7 +360,8 @@ export default {
           }
           this.tableData = saveData
         } else {
-          console.error('错误!')
+          this.tableData = null
+          console.error('没有数据!')
         }
       })
     }
@@ -357,68 +370,86 @@ export default {
 </script>
 
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-}
-.app-box {
-  width: 100%;
-  height: 100%;
-  display: flex;
-}
-.list {
-  height: 100%;
-  width: 12%;
-}
-.chart-box {
-  height: 100%;
-  width: 88%;
-}
-.loading-box {
-  display: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  margin: auto;
-  width: 200px;
-  height: 200px;
-}
-.loading .loading-box {
-  display: block;
-}
-.loading .list, .loading .chart-box  {
-  opacity: 0;
-}
-.table-box {
-  position: absolute;
-  left: 740px;
-  bottom: 10px;
-  display: flex;
-  width: calc(100% - 780px);
-  height: 160px;
-}
-table {
-  background-color: #ccc;
-  font-size: 0.8rem;
-  width: calc(100% - 200px);
-  height: 100%;
-}
-.button-box {
-  width: 200px;
-  background-color: gainsboro;
-}
-.button-box .button {
-  height: 30px;
-  line-height: 30px;
-  background-color: ghostwhite;
-  border-bottom: 1px solid #ccc;
-  text-align: center;
-}
-table tr {
-  background-color: white;
-}
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .app-box {
+    width: 100%;
+    height: 100%;
+    display: flex;
+  }
+  .list {
+    height: 100%;
+    width: 12%;
+  }
+  .chart-box {
+    height: 100%;
+    width: 88%;
+  }
+  .loading-box {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    width: 200px;
+    height: 200px;
+  }
+  .loading .loading-box {
+    display: block;
+  }
+  .loading .list, .loading .chart-box  {
+    opacity: 0;
+  }
+  .table-box {
+    position: absolute;
+    left: 740px;
+    bottom: 10px;
+    display: flex;
+    width: calc(100% - 782px);
+    height: 158px;
+    border: 1px solid #ccc
+  }
+  table {
+    background-color: #ccc;
+    font-size: 0.8rem;
+    width: calc(100% - 200px);
+    height: 100%;
+  }
+  .button-box {
+    width: 200px;
+    background-color: gainsboro;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .button-box .button {
+    height: 30px;
+    line-height: 30px;
+    background-color: ghostwhite;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+    padding: 0 5px;
+    overflow: hidden;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .button-box .button:hover {
+    background-color: cornflowerblue;
+    color: white;
+  }
+  table tr {
+    background-color: white;
+  }
+  .empty {
+    width: calc(100% - 200px);
+    height: 100%;
+    text-align: center;
+    line-height: 160px;
+    font-size: 2rem;
+  }
 </style>
