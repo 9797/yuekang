@@ -1,7 +1,7 @@
 <template>
   <div class="app-box" :class="{loading: loading}">
     <div class="list">
-      <TreeSelect dataUrl="http://192.168.30.133/odbc.php" @onCheck="updateData" @loadFinish="loadData" :radio="true" />
+      <TreeSelect dataUrl="http://127.0.0.1/odbc.php" @onCheck="updateData" @loadFinish="loadData" :radio="true" />
     </div>
     <div class="chart-box">
       <Chart ref="chart" :opt="chartData" />
@@ -271,7 +271,7 @@ export default {
           const dataName = element[1]
           // 如果数据不存在则向后端请求数据
           const sendData = { class: element[0], name: dataName, time: new Date().getTime() / 1000 }
-          this.post('http://192.168.30.133/odbcData.php', JSON.stringify(sendData), (response) => {
+          this.post('http://127.0.0.1/odbcData.php', JSON.stringify(sendData), (response) => {
             // 空数据处理
             if (!response.batch) {
               console.log('sdsdsd')
@@ -344,7 +344,7 @@ export default {
       // 增加到表格标题
       this.tableTitle = data[1]
       const sendData = { class: data[0], name: data[1] }
-      this.post('http://192.168.30.133/content.php', JSON.stringify(sendData), (response) => {
+      this.post('http://127.0.0.1/content.php', JSON.stringify(sendData), (response) => {
         if (response && JSON.stringify(response) !== '{}') {
           let saveData = [ [" "], ["开始时间"], ["结束时间"], ["总用时"], ["占比"] ]
           const totalTime = new Date(response["总批次"].endTime).getTime() - new Date(response["总批次"].startTime).getTime()
