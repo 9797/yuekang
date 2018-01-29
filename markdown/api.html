@@ -1,0 +1,186 @@
+<link href="http://statics.1024tools.com/css/markdown/github.css" rel="stylesheet" />
+<p>接口功能 ：</p>
+<p>接口地址 :  <a href="http://服务器IP地址/countTime.php">http://服务器IP地址/countTime.php</a></p>
+<p>请求方法 :    GET</p>
+<p>curl请求示例:  <code>curl --get –include &#39;http://服务器IP地址/countTime.php&#39;</code></p>
+<p>JSON返回示例 :</p>
+<pre><code>{
+    &quot;07671103YB&quot;: {
+        &quot;开始时间&quot;: &quot;2017-11-13 21:17:12&quot;,
+        &quot;抽空时间&quot;: &quot;2017-11-13 21:17:19&quot;,
+        &quot;冷藏时间&quot;: &quot;2017-11-14 02:45:06&quot;,
+        &quot;干燥时间&quot;: &quot;2017-11-14 03:25:56&quot;,
+        &quot;结束时间&quot;: &quot;2017-11-15 11:36:12&quot;
+    },
+    &quot;08371001YA&quot;: {
+        &quot;开始时间&quot;: &quot;2017-10-09 20:41:34&quot;,
+        &quot;抽空时间&quot;: &quot;2017-10-09 20:41:54&quot;,
+        &quot;冷藏时间&quot;: &quot;2017-10-10 01:21:31&quot;,
+        &quot;干燥时间&quot;: &quot;2017-10-10 02:02:12&quot;,
+        &quot;结束时间&quot;: &quot;2017-10-11 10:12:34&quot;
+    }
+}
+</code></pre><hr>
+<p>接口功能 ：app页面 左侧列表数据信息</p>
+<p>接口地址 :  <a href="http://服务器IP地址/odbc.php">http://服务器IP地址/odbc.php</a></p>
+<p>请求方法 :    GET</p>
+<p>curl请求示例:  <code>curl --get –include &#39;http://服务器IP地址/odbc.php&#39;</code></p>
+<p>JSON返回示例 :</p>
+<pre><code>{
+    &quot;data&quot;: [{
+        &quot;label&quot;: &quot;1#-2017&quot;,
+        &quot;children&quot;: [{
+            &quot;label&quot;: &quot;07670301-A&quot;
+        },{
+            &quot;label&quot;: &quot;07670604-A&quot;
+        }, {
+            &quot;label&quot;: &quot;07670606A&quot;
+        }, {
+            &quot;label&quot;: &quot;07670701A&quot;
+        }]
+    }, {
+        &quot;label&quot;: &quot;2#-2017&quot;,
+        &quot;children&quot;: [{
+            &quot;label&quot;: &quot;07670301-B&quot;
+        }, {
+            &quot;label&quot;: &quot;4-2满载测试01&quot;
+        }, {
+            &quot;label&quot;: &quot;4-2满载测试02&quot;
+        }, {
+            &quot;label&quot;: &quot;4-2满载测试03&quot;
+        }, {
+            &quot;label&quot;: &quot;SIP-20160926&quot;
+        }]
+    }, {
+        &quot;label&quot;: &quot;3#-2017&quot;,
+        &quot;children&quot;: [{
+            &quot;label&quot;: &quot;07670202Y-A&quot;
+        }, {
+            &quot;label&quot;: &quot;07670203Y-A&quot;
+        }, {
+            &quot;label&quot;: &quot;07670401-A&quot;
+        }, {
+            &quot;label&quot;: &quot;07670402-A&quot;
+        }]
+    }, {
+        &quot;label&quot;: &quot;4#-2017&quot;,
+        &quot;children&quot;: [{
+            &quot;label&quot;: &quot;07670203Y-B&quot;
+        }, {
+            &quot;label&quot;: &quot;07670401-B&quot;
+        }, {
+            &quot;label&quot;: &quot;07670402-B&quot;
+        }, {
+            &quot;label&quot;: &quot;07670404-B&quot;
+        }, {
+            &quot;label&quot;: &quot;07670405-B&quot;
+        }]
+    }]
+}
+</code></pre><hr>
+<p>接口功能 ：app页面 点击左侧列表项目请求图表数据</p>
+<p>接口地址 :  <a href="http://服务器IP地址/odbcData.php">http://服务器IP地址/odbcData.php</a></p>
+<p>请求方法 :    POST</p>
+<p>请求参数 ：</p>
+<table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:center">类型</th>
+<th style="text-align:right">必填</th>
+<th>描述</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>class</td>
+<td style="text-align:center">String</td>
+<td style="text-align:right">true</td>
+<td>数据所在分组</td>
+<td>无</td>
+</tr>
+<tr>
+<td>name</td>
+<td style="text-align:center">String</td>
+<td style="text-align:right">true</td>
+<td>名称</td>
+<td>无</td>
+</tr>
+</tbody>
+</table>
+<p>JSON返回示例 :</p>
+<pre><code>{
+    &quot;count&quot;: &quot;7&quot;,
+    &quot;time&quot;: [&quot;2017-03-26 17:01:42&quot;, &quot;2017-03-26 17:02:42&quot;, &quot;2017-03-26 17:03:42&quot;, &quot;2017-03-26 17:04:42&quot;, &quot;2017-03-26 17:05:42&quot;, &quot;2017-03-26 17:06:42&quot;, &quot;2017-03-26 17:08:42&quot;],
+    &quot;batch&quot;: &quot;07670301-A&quot;,
+    &quot;data&quot;: [{
+        &quot;name&quot;: &quot;板层入口温度(℃)&quot;,
+        &quot;type&quot;: &quot;line&quot;,
+        &quot;smooth&quot;: &quot;true&quot;,
+        &quot;areaStyle&quot;: {
+            &quot;normal&quot;: {}
+        },
+        &quot;data&quot;: [&quot;13.3&quot;, &quot;11.2&quot;, &quot;9.09999999999999&quot;, &quot;7.09999999999999&quot;, &quot;5.0&quot;, &quot;3.5&quot;, &quot;1.8&quot;]
+    }, {
+        &quot;name&quot;: &quot;板层出口温度(℃)&quot;,
+        &quot;type&quot;: &quot;line&quot;,
+        &quot;smooth&quot;: &quot;true&quot;,
+        &quot;areaStyle&quot;: {
+            &quot;normal&quot;: {}
+        },
+        &quot;data&quot;: [&quot;20.7&quot;, &quot;18.9&quot;, &quot;17.1&quot;, &quot;15.3&quot;, &quot;13.4&quot;, &quot;11.7&quot;, &quot;10.0&quot;]
+    }]
+}
+</code></pre><hr>
+<p>接口功能 ：app页面 下方数据统计列表点击请求数据</p>
+<p>接口地址 :  <a href="http://服务器IP地址/content.php">http://服务器IP地址/content.php</a></p>
+<p>请求方法 :    POST</p>
+<p>请求参数 ：</p>
+<table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:center">类型</th>
+<th style="text-align:right">必填</th>
+<th>描述</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>class</td>
+<td style="text-align:center">String</td>
+<td style="text-align:right">true</td>
+<td>数据所在分组</td>
+<td>无</td>
+</tr>
+<tr>
+<td>name</td>
+<td style="text-align:center">String</td>
+<td style="text-align:right">true</td>
+<td>名称</td>
+<td>无</td>
+</tr>
+</tbody>
+</table>
+<p>JSON返回示例 :</p>
+<pre><code>{
+    &quot;总批次&quot;: {
+        &quot;startTime&quot;: &quot;2017-02-26 13:31:33&quot;,
+        &quot;endTime&quot;: &quot;2017-02-27 06:45:19&quot;
+    },
+    &quot;预冻&quot;: {
+        &quot;startTime&quot;: &quot;2017-02-25 16:57:42&quot;,
+        &quot;endTime&quot;: &quot;2017-02-25 16:57:42&quot;
+    },
+    &quot;抽空&quot;: {
+        &quot;startTime&quot;: &quot;2017-02-25 16:57:42&quot;,
+        &quot;endTime&quot;: &quot;2017-02-25 23:20:55&quot;
+    },
+    &quot;干燥&quot;: {
+        &quot;startTime&quot;: &quot;2017-02-25 23:20:55&quot;,
+        &quot;endTime&quot;: &quot;2017-02-27 06:45:19&quot;
+    }
+}
+</code></pre><hr>
