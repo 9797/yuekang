@@ -1,7 +1,7 @@
 <template>
   <div class="app-box" :class="{loading: loading}">
     <div class="list">
-      <TreeSelect dataUrl="http://192.168.30.238/odbc.php" @onCheck="updateData" @loadFinish="loadData" :radio="true" />
+      <TreeSelect :dataList="dataList" @onCheck="updateData" :radio="true" />
     </div>
     <div class="chart-box">
       <Chart ref="chart" :opt="chartData" />
@@ -41,6 +41,7 @@
 <script>
 import Chart from 'echarts-middleware'
 import TreeSelect from 'treeselect'
+import localforage from 'localforage'
 
 let dataSave = {}
 const colorList = ['#FFFF00', '#0000FF','#CCFFCC', '#FFCC99','#33CC33', "#CCFFFF", "#66CCCC"]
@@ -52,13 +53,12 @@ export default {
   },
   data () {
     return {
-      animation: false,
       tooltipData: [],
       loading: true,
+      dataList: null,
       tableTitle: '',
       tableList: [],
       tableData: null,
-      a: '组件已过期!',
       chartData: {
         "title": {
           "text": "北京悦康药业", 
@@ -166,6 +166,38 @@ export default {
         ]
       }
     }
+  },
+  mounted () {
+    localforage.getItem('data', (err, value) => {
+      if (!err && value) {
+        // 从缓存中取出数据
+        dataSave = value.dataSave
+        this.dataList = value.dataList
+        this.tableData = value.tableData
+        this.tableList = value.tableList
+        this.tableTitle = value.tableTitle
+        this.tooltipData = value.tooltipData
+        let dataCopy = this.deepClone(this.chartData)
+        dataCopy.xAxis = value.dataCopy_xAxis
+        dataCopy.series = value.dataCopy_series
+        dataCopy.legend.data = value.dataCopy_legend_data
+        this.$refs.chart.chart.setOption(dataCopy, true)
+        this.loading = false
+      } else {
+        const dataUrl = 'http://192.168.30.238/odbc.php'
+        // 如果没有data，但是有dataUrl,那么请求Url获取数据
+        this.loadData(dataUrl).then((response) => {
+          // 默认选中第一项
+          response.data[0].children[0].checked = true
+          this.dataList = response.data
+          this.updateData({
+            checked: true,
+            checkedList: response.data
+          })
+          this.loading = false
+        })
+      }
+    })
   },
   methods: {
     post (url, data, fn) {
@@ -279,9 +311,7 @@ export default {
           this.post('http://192.168.30.238/odbcData.php', JSON.stringify(sendData), (response) => {
             // console.log(response)
             // 空数据处理
-            if (!response.batch) {
-              return
-            }
+            if (!response.batch) return
             this.tooltipData.push({"batch": response.batch, "time": response.time})
             // console.log(JSON.stringify(this.tooltipData))
             response.batch = null
@@ -292,9 +322,9 @@ export default {
             this.tableList.push(element[0] + '&&' + element[1])
             // 待优化
             chartServerData = chartServerData.concat(response.data)
-            console.log(response)
+            // console.log(response)
             const count = parseInt(Number(response.count))
-            console.log(count)
+            // console.log(count)
             if (count > xAxisMax) xAxisMax = count
             // 如果数据是最后一个 那么刷新图表
             // console.log(dataIndex)
@@ -313,6 +343,21 @@ export default {
               dataCopy.legend.data = legendList
               this.$refs.chart.chart.setOption(dataCopy, true)
               this.$refs.chart.chart.hideLoading()
+              // 保存数据
+              const saveData = {
+                dataSave: dataSave,
+                dataList: this.dataList,
+                tableData: this.tableData,
+                tableList: this.tableList,
+                tableTitle: this.tableTitle,
+                tooltipData: this.tooltipData,
+                dataCopy_xAxis: dataCopy.xAxis,
+                dataCopy_series: chartServerData,
+                dataCopy_legend_data: dataCopy.legend.data
+              }
+              localforage.setItem('data', saveData, (err) => {
+                if (err) console.error(err)
+              })
             }
           })
         } else {
@@ -343,10 +388,19 @@ export default {
         }
       })
     },
-    loadData () {
-      const data = {"checked":true,"target":{"label":"07670301-A","checked":true},"checkedList":[{"label":"1#-2017","children":[{"label":"07670301-A","checked":true},{"label":"07670403-B"},{"label":"07670501-B"},{"label":"07670502-B"},{"label":"07670503-B"},{"label":"07670603-A"},{"label":"07670604-A"},{"label":"07670606A"},{"label":"07670701A"},{"label":"07670802A"},{"label":"07670803A"},{"label":"07671101B"},{"label":"07671101YA"},{"label":"07671102B"},{"label":"07671102YA"},{"label":"07671103YA"},{"label":"08271101Y"},{"label":"08271105Y"},{"label":"08271106Y"},{"label":"08370902Y"},{"label":"08371001Y"},{"label":"20170520"},{"label":"4-1满载测试01"},{"label":"4-1满载测试02"},{"label":"4-1满载测试03"}]},{"label":"2#-2017","children":[{"label":"07670301-B"},{"label":"4-2满载测试01"},{"label":"4-2满载测试02"},{"label":"4-2满载测试03"},{"label":"SIP-20160926"}]},{"label":"3#-2017","children":[{"label":"07670202Y-A"},{"label":"07670203Y-A"},{"label":"07670401-A"},{"label":"07670402-A"},{"label":"07670403-A"},{"label":"07670404-A"},{"label":"07670405-A"},{"label":"07670501-A"},{"label":"07670502-A"},{"label":"07670601-A"},{"label":"07670602-B"},{"label":"07670603-A"},{"label":"07670604-A"},{"label":"07670605A"},{"label":"07670606A"},{"label":"07670701A"},{"label":"07670801A"},{"label":"07670802A"},{"label":"07670803A"},{"label":"07670804A"},{"label":"07671101YA"},{"label":"4-3满载测试01"},{"label":"4-3满载测试02"},{"label":"4-3满载测试03"}]},{"label":"4#-2017","children":[{"label":"07670203Y-B"},{"label":"07670401-B"},{"label":"07670402-B"},{"label":"07670404-B"},{"label":"07670405-B"},{"label":"07670501-B"},{"label":"07670502-B"},{"label":"07670503-B"},{"label":"07670601-B"},{"label":"07670602-A"},{"label":"07670603-B"},{"label":"07670604-B"},{"label":"07670605B"},{"label":"07670606B"},{"label":"07670701B"},{"label":"07670801B"},{"label":"07670802B"},{"label":"07670803B"},{"label":"07670804B"},{"label":"07671101A"},{"label":"07671101YB"},{"label":"07671102A"},{"label":"07671102YB"},{"label":"07671103YB"},{"label":"08371001YA"},{"label":"4-4满载测试01"},{"label":"4-4满载测试02"},{"label":"4-4满载测试03"},{"label":"注射用奥扎格雷钠"}]}],"parent":{"label":"1#-2017","children":[{"label":"07670301-A","checked":true},{"label":"07670403-B"},{"label":"07670501-B"},{"label":"07670502-B"},{"label":"07670503-B"},{"label":"07670603-A"},{"label":"07670604-A"},{"label":"07670606A"},{"label":"07670701A"},{"label":"07670802A"},{"label":"07670803A"},{"label":"07671101B"},{"label":"07671101YA"},{"label":"07671102B"},{"label":"07671102YA"},{"label":"07671103YA"},{"label":"08271101Y"},{"label":"08271105Y"},{"label":"08271106Y"},{"label":"08370902Y"},{"label":"08371001Y"},{"label":"20170520"},{"label":"4-1满载测试01"},{"label":"4-1满载测试02"},{"label":"4-1满载测试03"}]}}
-      this.updateData(data)
-      this.loading = false
+    loadData (url) {
+      return new Promise((resolve, reject) => {
+        const obj = new XMLHttpRequest()
+        obj.open('GET', url, true)
+        obj.onreadystatechange = () => {
+          if (obj.readyState !== 4) return
+          if (obj.status === 304 || obj.status === 200) {
+            const responseText = obj.responseText
+            resolve(JSON.parse(responseText))
+          }
+        }
+        obj.send(null)
+      })
     },
     listClick (item) {
       const data = item.split('&&')
