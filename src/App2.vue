@@ -1,7 +1,7 @@
 <template>
   <div class="app-box" :class="{loading: loading}">
     <div class="list">
-      <TreeSelect dataUrl="http://192.168.30.222/odbc.php" @onCheck="updateData" @loadFinish="loadData" :radio="true" />
+      <TreeSelect dataUrl="http://192.168.30.238/odbc.php" @onCheck="updateData" @loadFinish="loadData" :radio="true" />
     </div>
     <div class="chart-box">
       <Chart ref="chart" :opt="chartData" />
@@ -42,6 +42,8 @@
 import Chart from 'echarts-middleware'
 import TreeSelect from 'treeselect'
 
+let dataSave = {}
+const colorList = ['#FFFF00', '#0000FF','#CCFFCC', '#FFCC99','#33CC33', "#CCFFFF", "#66CCCC"]
 export default {
   name: 'app',
   components: {
@@ -50,7 +52,6 @@ export default {
   },
   data () {
     return {
-      dataSave: {},
       animation: false,
       tooltipData: [],
       loading: true,
@@ -87,7 +88,7 @@ export default {
             }
           }
         },
-        "color": ['#85b6b2', '#6d4f8d','#cd5e7e', '#e38980','#f7db88', "#40e0d0", "#faf0e6"],
+        "color": colorList,
         "tooltip": {
           "trigger": "axis",
           "axisPointer": {
@@ -110,7 +111,7 @@ export default {
                 const index = Math.ceil((data.seriesIndex + 1) / 6) - 1
                 // console.log(dataIndex)
                 // console.log(tooltipData)
-                showData += `${tooltipData[index].batch}---${tooltipData[index].time[dataIndex]}---${data.seriesId}---${Number(data.value).toFixed(2)}<br />`
+                showData += `<span style="color: ${colorList[item % 6]}">${tooltipData[index].batch}---${tooltipData[index].time[dataIndex]}---${data.seriesId}---${Number(data.value).toFixed(2)}</div><br />`
               }
             }
             return showData;
@@ -240,11 +241,10 @@ export default {
       }
     },
     updateData (e) {
-      this.$refs.chart.chart.showLoading()
       // 判断是否选中
       const checkList = []
       // 判断是否超过时间
-      if (new Date().getTime() >= 1517673600 * 1000) { return }
+      // if (new Date().getTime() >= 1517673600 * 1000) { return }
       let dataCopy = this.deepClone(this.chartData)
       // 判断选中情况
       e.checkedList.forEach(element => {
@@ -256,7 +256,6 @@ export default {
           }
         })
       })
-      // console.log(checkList)
       const dataLenhth = checkList.length
       let dataIndex = 0
       let xAxisMax = 0
@@ -264,16 +263,21 @@ export default {
       // console.log(dataCopy)
       // 清空表格列表
       this.tableList = []
+      // console.log(checkList)
       checkList.forEach(element => {
         // console.log(element)
         // 判断数据是否不存在
-        console.log(this.dataSave[element[0] + '&&' + element[1]])
-        if (!this.dataSave[element[0] + '&&' + element[1]]) {
+        // console.log(this.dataSave[element[0] + '&&' + element[1]])
+        console.log(element[0] + '&&' + element[1])
+        if (!dataSave[element[0] + '&&' + element[1]]) {
           console.log('向后端请求数据')
           const dataName = element[1]
+          // 加载动画
+          this.$refs.chart.chart.showLoading()
           // 如果数据不存在则向后端请求数据
           const sendData = { class: element[0], name: dataName, time: new Date().getTime() / 1000 }
-          this.post('http://192.168.30.222/odbcData.php', JSON.stringify(sendData), (response) => {
+          this.post('http://192.168.30.238/odbcData.php', JSON.stringify(sendData), (response) => {
+            // console.log(response)
             // 空数据处理
             if (!response.batch) {
               return
@@ -282,13 +286,15 @@ export default {
             // console.log(JSON.stringify(this.tooltipData))
             response.batch = null
             response.time = null
-            this.dataSave[element[0] + '&&' + element[1]] = response
+            dataSave[element[0] + '&&' + element[1]] = response
             // 增加表格列表
+            // console.log(element[0] + '&&' + element[1])
             this.tableList.push(element[0] + '&&' + element[1])
             // 待优化
             chartServerData = chartServerData.concat(response.data)
             console.log(response)
-            const count = parseInt(response.count)
+            const count = parseInt(Number(response.count))
+            console.log(count)
             if (count > xAxisMax) xAxisMax = count
             // 如果数据是最后一个 那么刷新图表
             // console.log(dataIndex)
@@ -313,7 +319,9 @@ export default {
           // 增加计数器
           dataIndex++
           // console.log(dataIndex, dataLenhth)
-          const saveData = this.dataSave[element[0] + element[1]]
+          const saveData = dataSave[element[0] + '&&' + element[1]]
+          // 增加表格列表
+          this.tableList.push(element[0] + '&&' + element[1])
           if (saveData.count > xAxisMax) xAxisMax = parseInt(saveData.count)
           chartServerData = chartServerData.concat(saveData.data)
           if (dataIndex === dataLenhth) {
@@ -345,7 +353,7 @@ export default {
       // 增加到表格标题
       this.tableTitle = data[1]
       const sendData = { class: data[0], name: data[1] }
-      this.post('http://192.168.30.222/content.php', JSON.stringify(sendData), (response) => {
+      this.post('http://192.168.30.238/content.php', JSON.stringify(sendData), (response) => {
         if (response && JSON.stringify(response) !== '{}') {
           let saveData = [ [" "], ["开始时间"], ["结束时间"], ["总用时"], ["占比"] ]
           const totalTime = new Date(response["总批次"].endTime).getTime() - new Date(response["总批次"].startTime).getTime()

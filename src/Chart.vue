@@ -55,8 +55,7 @@ export default {
     }
   },
   created () {
-    this.get('./countTime.php').then((data) => {
-      console.log(data)
+    this.get('http://192.168.30.238/countTime.php').then((data) => {
       let xData = []
       let series = [
         {
