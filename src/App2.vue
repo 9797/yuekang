@@ -111,7 +111,13 @@ export default {
                 const index = Math.ceil((data.seriesIndex + 1) / 6) - 1
                 // console.log(dataIndex)
                 // console.log(tooltipData)
-                showData += `<span style="color: ${colorList[item % 6]}">${tooltipData[index].batch}---${tooltipData[index].time[dataIndex]}---${data.seriesId}---${Number(data.value).toFixed(2)}</div><br />`
+                if(item % 6 === 0) {
+                  showData += `<div style="background: #CCFFFF; color: #333; font-weight: bold;">`
+                  showData += `批次: ${tooltipData[index].batch}<br />`
+                  showData += `时间: ${tooltipData[index].time[dataIndex]}<br />`
+                  showData += `</div>`
+                }
+                showData += `<span style="color: ${colorList[item % 6]}">${data.seriesId}---${Number(data.value).toFixed(2)}</div><br />`
               }
             }
             return showData;
