@@ -57,6 +57,8 @@ export default {
       loading: true,
       dataList: null,
       tableTitle: '',
+      serverIP: 'http://192.168.30.110',
+      granularity: 10,
       tableList: [],
       tableData: null,
       chartData: {
@@ -106,7 +108,8 @@ export default {
             for(let item in obj) {
               const data = obj[item]
               if (typeof data === 'object') {
-                const dataIndex = data.dataIndex
+                // 下标乘以粒度
+                const dataIndex = data.dataIndex * this.granularity
                 // console.log(data.seriesIndex)
                 const index = Math.ceil((data.seriesIndex + 1) / 6) - 1
                 // console.log(dataIndex)
@@ -173,6 +176,11 @@ export default {
       }
     }
   },
+  created () {
+    this.get(this.serverIP + '/config.json').then((data) => {
+      console.log(data)
+    })
+  },
   mounted () {
     localforage.getItem('data', (err, value) => {
       if (!err && value) {
@@ -187,12 +195,28 @@ export default {
         dataCopy.xAxis = value.dataCopy_xAxis
         dataCopy.series = value.dataCopy_series
         dataCopy.legend.data = value.dataCopy_legend_data
+        // 进行粒度过滤
+        function gl(array, granularity) {
+          const arrayLength = array.length
+          let newArray = []
+          for(let i = 0; i < arrayLength; i++) {
+            if (i % granularity === 0) newArray.push(array[i])
+          }
+          return newArray
+        }
+        for (let item in dataCopy.xAxis) {
+          dataCopy.xAxis[item].data = gl(dataCopy.xAxis[item].data, this.granularity)
+        }
+        // console.log(dataCopy.series)
+        for (let item in dataCopy.series) {
+          dataCopy.series[item].data = gl(dataCopy.series[item].data, this.granularity)
+        }
+        console.log(dataCopy.xAxis)
         this.$refs.chart.chart.setOption(dataCopy, true)
         this.loading = false
       } else {
-        const dataUrl = 'http://192.168.30.238/odbc.php'
         // 如果没有data，但是有dataUrl,那么请求Url获取数据
-        this.loadData(dataUrl).then((response) => {
+        this.loadData(this.serverIP + '/odbc.php').then((response) => {
           // 默认选中第一项
           response.data[0].children[0].checked = true
           this.dataList = response.data
@@ -314,7 +338,7 @@ export default {
           this.$refs.chart.chart.showLoading()
           // 如果数据不存在则向后端请求数据
           const sendData = { class: element[0], name: dataName, time: new Date().getTime() / 1000 }
-          this.post('http://192.168.30.238/odbcData.php', JSON.stringify(sendData), (response) => {
+          this.post(this.serverIP + '/odbcData.php', JSON.stringify(sendData), (response) => {
             // console.log(response)
             // 空数据处理
             if (!response.batch) return
@@ -413,7 +437,7 @@ export default {
       // 增加到表格标题
       this.tableTitle = data[1]
       const sendData = { class: data[0], name: data[1] }
-      this.post('http://192.168.30.238/content.php', JSON.stringify(sendData), (response) => {
+      this.post('./content.php', JSON.stringify(sendData), (response) => {
         if (response && JSON.stringify(response) !== '{}') {
           let saveData = [ [" "], ["开始时间"], ["结束时间"], ["总用时"], ["占比"] ]
           const totalTime = new Date(response["总批次"].endTime).getTime() - new Date(response["总批次"].startTime).getTime()
@@ -432,6 +456,24 @@ export default {
           this.tableData = null
           console.error('没有数据!')
         }
+      })
+    },
+    get (url) {
+      return new Promise((resolve, reject) => {
+        const headers = {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        }
+        fetch(url, headers).then((res) => {
+          if (res.ok) {
+            res.json().then((data) => {
+              resolve(data)
+            })
+          } else {
+            reject(res.status)
+          }
+        }, (e) => {
+          reject(e)
+        })
       })
     }
   }

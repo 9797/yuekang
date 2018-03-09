@@ -17,6 +17,7 @@ export default {
       data: null,
       chartData: [],
       loading: true,
+      serverIP: 'http://192.168.30.110',
       mockData: {
         legend: {
           data: ['干燥','抽空','预冻']
@@ -55,7 +56,7 @@ export default {
     }
   },
   created () {
-    this.get('http://192.168.30.238/countTime.php').then((data) => {
+    this.get(this.serverIP + '/countTime.php').then((data) => {
       let xData = []
       let series = [
         {
