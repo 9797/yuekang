@@ -57,7 +57,7 @@ export default {
       loading: true,
       dataList: null,
       tableTitle: '',
-      serverIP: 'http://192.168.30.110',
+      serverIP: 'http://192.168.0.1',
       granularity: 10,
       tableList: [],
       tableData: null,
@@ -177,8 +177,9 @@ export default {
     }
   },
   created () {
-    this.get(this.serverIP + '/config.json').then((data) => {
-      console.log(data)
+    this.get('./config.json').then((config) => {
+      this.serverIP = config.server,
+      this.granularity = config.granularity
     })
   },
   mounted () {
@@ -196,22 +197,14 @@ export default {
         dataCopy.series = value.dataCopy_series
         dataCopy.legend.data = value.dataCopy_legend_data
         // 进行粒度过滤
-        function gl(array, granularity) {
-          const arrayLength = array.length
-          let newArray = []
-          for(let i = 0; i < arrayLength; i++) {
-            if (i % granularity === 0) newArray.push(array[i])
-          }
-          return newArray
-        }
         for (let item in dataCopy.xAxis) {
-          dataCopy.xAxis[item].data = gl(dataCopy.xAxis[item].data, this.granularity)
+          dataCopy.xAxis[item].data = this.gl(dataCopy.xAxis[item].data, this.granularity)
         }
         // console.log(dataCopy.series)
         for (let item in dataCopy.series) {
-          dataCopy.series[item].data = gl(dataCopy.series[item].data, this.granularity)
+          dataCopy.series[item].data = this.gl(dataCopy.series[item].data, this.granularity)
         }
-        console.log(dataCopy.xAxis)
+        // console.log(dataCopy.xAxis)
         this.$refs.chart.chart.setOption(dataCopy, true)
         this.loading = false
       } else {
@@ -342,7 +335,8 @@ export default {
             // console.log(response)
             // 空数据处理
             if (!response.batch) return
-            this.tooltipData.push({"batch": response.batch, "time": response.time})
+            // 粒度优化         
+            this.tooltipData.push({"batch": this.gl(response.batch, this.granularity), "time": response.time})
             // console.log(JSON.stringify(this.tooltipData))
             response.batch = null
             response.time = null
@@ -351,6 +345,7 @@ export default {
             // console.log(element[0] + '&&' + element[1])
             this.tableList.push(element[0] + '&&' + element[1])
             // 待优化
+            // console.log(response)
             chartServerData = chartServerData.concat(response.data)
             // console.log(response)
             const count = parseInt(Number(response.count))
@@ -361,8 +356,8 @@ export default {
             if (++dataIndex === dataLenhth) {
               // 生成坐标轴
               const xAxis = Array(xAxisMax).fill(0).map((v, i) => { return (i / 60).toFixed(1) + '小时' })
-              // console.log(xAxis)
-              dataCopy.xAxis[0].data = xAxis
+              console.log(xAxis)
+              dataCopy.xAxis[0].data =  this.gl(xAxis, this.granularity)
               dataCopy.series = chartServerData
               // 生成图例
               let legendList = []
@@ -394,17 +389,21 @@ export default {
           // 增加计数器
           dataIndex++
           // console.log(dataIndex, dataLenhth)
-          const saveData = dataSave[element[0] + '&&' + element[1]]
+          let saveData = dataSave[element[0] + '&&' + element[1]]
           // 增加表格列表
           this.tableList.push(element[0] + '&&' + element[1])
           if (saveData.count > xAxisMax) xAxisMax = parseInt(saveData.count)
           chartServerData = chartServerData.concat(saveData.data)
+          console.log(chartServerData)
           if (dataIndex === dataLenhth) {
             // 生成坐标轴
             // console.log(xAxisMax)
             const xAxis = Array(xAxisMax).fill(0).map((v, i) => { return (i / 60).toFixed(1) + '小时' })
-            // console.log(xAxis.toString())
-            dataCopy.xAxis[0].data = xAxis
+            console.log(xAxis.toString())
+            console.log(xAxis)
+            dataCopy.xAxis[0].data = this.gl(xAxis, this.granularity)
+            console.log(dataCopy.xAxis[0].data)
+            // console.log(chartServerData)
             dataCopy.series = chartServerData
             // 生成图例
             let legendList = []
@@ -475,6 +474,15 @@ export default {
           reject(e)
         })
       })
+    },
+    gl(array, granularity) {
+      if (granularity <= 1) return array
+      const arrayLength = array.length
+      let newArray = []
+      for(let i = 0; i < arrayLength; i++) {
+        if (i % granularity === 0) newArray.push(array[i])
+      }
+      return newArray
     }
   }
 }

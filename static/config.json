@@ -1,3 +1,4 @@
 {
-  "server": "http://192.168.30.110"
+  "server": "http://192.168.30.110",
+  "granularity": 10
 }

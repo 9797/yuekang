@@ -17,7 +17,7 @@ export default {
       data: null,
       chartData: [],
       loading: true,
-      serverIP: 'http://192.168.30.110',
+      serverIP: 'http://192.168.0.1',
       mockData: {
         legend: {
           data: ['干燥','抽空','预冻']
@@ -56,57 +56,63 @@ export default {
     }
   },
   created () {
-    this.get(this.serverIP + '/countTime.php').then((data) => {
-      let xData = []
-      let series = [
-        {
-          name:'干燥',
-          type:'bar',
-          stack: '搜索引擎',
-          label: {
-            normal: {
-              show: true,
-              formatter: '{c} 分钟'
-            }
+    // 请求配置文件
+    this.get('./config.json').then((data) => {
+      const config = JSON.parse(data)
+      this.serverIP = config.server
+      // 请求数据文件
+      this.get(this.serverIP + '/countTime.php').then((data) => {
+        let xData = []
+        let series = [
+          {
+            name:'干燥',
+            type:'bar',
+            stack: '搜索引擎',
+            label: {
+              normal: {
+                show: true,
+                formatter: '{c} 分钟'
+              }
+            },
+            data: []
           },
-          data: []
-        },
-        {
-          name:'抽空',
-          type:'bar',
-          stack: '搜索引擎',
-          label: {
-            normal: {
-              show: true,
-              formatter: '{c} 分钟'
-            }
+          {
+            name:'抽空',
+            type:'bar',
+            stack: '搜索引擎',
+            label: {
+              normal: {
+                show: true,
+                formatter: '{c} 分钟'
+              }
+            },
+            data: []
           },
-          data: []
-        },
-        {
-          name:'预冻',
-          type:'bar',
-          stack: '搜索引擎',
-          label: {
-            normal: {
-              show: true,
-              formatter: '{c} 分钟'
-            }
-          },
-          data: []
+          {
+            name:'预冻',
+            type:'bar',
+            stack: '搜索引擎',
+            label: {
+              normal: {
+                show: true,
+                formatter: '{c} 分钟'
+              }
+            },
+            data: []
+          }
+        ]
+        for (let key in data) {
+          const element = data[key]
+          const startTime = new Date(element['开始时间']).getTime()
+          xData.push(key)
+          series[0].data.push(parseInt((new Date(element['结束时间']).getTime() - new Date(element['干燥时间']).getTime()) / 60000))
+          series[1].data.push(parseInt((new Date(element['冷藏时间']).getTime() - new Date(element['抽空时间']).getTime()) / 60000))
+          series[2].data.push(parseInt((new Date(element['干燥时间']).getTime() - new Date(element['冷藏时间']).getTime()) / 60000))
         }
-      ]
-      for (let key in data) {
-        const element = data[key]
-        const startTime = new Date(element['开始时间']).getTime()
-        xData.push(key)
-        series[0].data.push(parseInt((new Date(element['结束时间']).getTime() - new Date(element['干燥时间']).getTime()) / 60000))
-        series[1].data.push(parseInt((new Date(element['冷藏时间']).getTime() - new Date(element['抽空时间']).getTime()) / 60000))
-        series[2].data.push(parseInt((new Date(element['干燥时间']).getTime() - new Date(element['冷藏时间']).getTime()) / 60000))
-      }
-      this.mockData.series = series
-      this.mockData.xAxis[0].data = xData
-      this.loading = false
+        this.mockData.series = series
+        this.mockData.xAxis[0].data = xData
+        this.loading = false
+      })
     })
   },
   methods: {
