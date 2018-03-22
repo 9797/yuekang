@@ -57,10 +57,14 @@ export default {
       loading: true,
       dataList: null,
       tableTitle: '',
-      serverIP: 'http://192.168.0.1',
+      // 数据请求服务器地址
+      serverIP: 'http://127.0.0.1',
+      // 粒度设置
       granularity: 10,
       tableList: [],
       tableData: null,
+      odbcDataUrl: '/odbcData.php',
+      odbcListUrl: '/odbc.php',
       chartData: {
         "title": {
           "text": "北京悦康药业", 
@@ -178,48 +182,49 @@ export default {
   },
   created () {
     this.get('./config.json').then((config) => {
-      this.serverIP = config.server,
+      this.serverIP = config.server
+      this.odbcListUrl = config.odbcListUrl      
       this.granularity = config.granularity
-    })
-  },
-  mounted () {
-    localforage.getItem('data', (err, value) => {
-      if (!err && value) {
-        // 从缓存中取出数据
-        dataSave = value.dataSave
-        this.dataList = value.dataList
-        this.tableData = value.tableData
-        this.tableList = value.tableList
-        this.tableTitle = value.tableTitle
-        this.tooltipData = value.tooltipData
-        let dataCopy = this.deepClone(this.chartData)
-        dataCopy.xAxis = value.dataCopy_xAxis
-        dataCopy.series = value.dataCopy_series
-        dataCopy.legend.data = value.dataCopy_legend_data
-        // 进行粒度过滤
-        for (let item in dataCopy.xAxis) {
-          dataCopy.xAxis[item].data = this.gl(dataCopy.xAxis[item].data, this.granularity)
-        }
-        // console.log(dataCopy.series)
-        for (let item in dataCopy.series) {
-          dataCopy.series[item].data = this.gl(dataCopy.series[item].data, this.granularity)
-        }
-        // console.log(dataCopy.xAxis)
-        this.$refs.chart.chart.setOption(dataCopy, true)
-        this.loading = false
-      } else {
-        // 如果没有data，但是有dataUrl,那么请求Url获取数据
-        this.loadData(this.serverIP + '/odbc.php').then((response) => {
-          // 默认选中第一项
-          response.data[0].children[0].checked = true
-          this.dataList = response.data
-          this.updateData({
-            checked: true,
-            checkedList: response.data
-          })
+      this.odbcDataUrl = config.odbcDataUrl
+      this.chartData.color = config.color
+      localforage.getItem('data', (err, value) => {
+        if (!err && value) {
+          // 从缓存中取出数据
+          dataSave = value.dataSave
+          this.dataList = value.dataList
+          this.tableData = value.tableData
+          this.tableList = value.tableList
+          this.tableTitle = value.tableTitle
+          this.tooltipData = value.tooltipData
+          let dataCopy = this.deepClone(this.chartData)
+          dataCopy.xAxis = value.dataCopy_xAxis
+          dataCopy.series = value.dataCopy_series
+          dataCopy.legend.data = value.dataCopy_legend_data
+          // 进行粒度过滤
+          for (let item in dataCopy.xAxis) {
+            dataCopy.xAxis[item].data = this.gl(dataCopy.xAxis[item].data, this.granularity)
+          }
+          // console.log(dataCopy.series)
+          for (let item in dataCopy.series) {
+            dataCopy.series[item].data = this.gl(dataCopy.series[item].data, this.granularity)
+          }
+          // console.log(dataCopy.xAxis)
+          this.$refs.chart.chart.setOption(dataCopy, true)
           this.loading = false
-        })
-      }
+        } else {
+          // 如果没有data，但是有dataUrl,那么请求Url获取数据
+          this.loadData(this.serverIP + this.odbcListUrl).then((response) => {
+            // 默认选中第一项
+            response.data[0].children[0].checked = true
+            this.dataList = response.data
+            this.updateData({
+              checked: true,
+              checkedList: response.data
+            })
+            this.loading = false
+          })
+        }
+      })
     })
   },
   methods: {
@@ -331,12 +336,13 @@ export default {
           this.$refs.chart.chart.showLoading()
           // 如果数据不存在则向后端请求数据
           const sendData = { class: element[0], name: dataName, time: new Date().getTime() / 1000 }
-          this.post(this.serverIP + '/odbcData.php', JSON.stringify(sendData), (response) => {
+          this.post(this.serverIP + this.odbcDataUrl, JSON.stringify(sendData), (response) => {
             // console.log(response)
             // 空数据处理
             if (!response.batch) return
-            // 粒度优化         
-            this.tooltipData.push({"batch": this.gl(response.batch, this.granularity), "time": response.time})
+            // 粒度优化
+            // console.log(response.batch, this.gl(response.batch, this.granularity))
+            this.tooltipData.push({"batch": response.batch, "time": response.time})
             // console.log(JSON.stringify(this.tooltipData))
             response.batch = null
             response.time = null
@@ -475,7 +481,7 @@ export default {
         })
       })
     },
-    gl(array, granularity) {
+    gl (array, granularity) {
       if (granularity <= 1) return array
       const arrayLength = array.length
       let newArray = []

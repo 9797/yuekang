@@ -61,7 +61,7 @@ export default {
       const config = JSON.parse(data)
       this.serverIP = config.server
       // 请求数据文件
-      this.get(this.serverIP + '/countTime.php').then((data) => {
+      this.get(this.serverIP + data.countTime).then((data) => {
         let xData = []
         let series = [
           {
