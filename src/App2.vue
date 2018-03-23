@@ -44,7 +44,7 @@ import TreeSelect from 'treeselect'
 import localforage from 'localforage'
 
 let dataSave = {}
-const colorList = ['#FFFF00', '#0000FF','#CCFFCC', '#FFCC99','#33CC33', "#CCFFFF", "#66CCCC"]
+let colorList = ['#FFFF00', '#0000FF','#CCFFCC', '#FFCC99','#33CC33', "#CCFFFF", "#66CCCC"]
 export default {
   name: 'app',
   components: {
@@ -187,6 +187,7 @@ export default {
       this.granularity = config.granularity
       this.odbcDataUrl = config.odbcDataUrl
       this.chartData.color = config.color
+      colorList = config.color
       localforage.getItem('data', (err, value) => {
         if (!err && value) {
           // 从缓存中取出数据
@@ -196,7 +197,9 @@ export default {
           this.tableList = value.tableList
           this.tableTitle = value.tableTitle
           this.tooltipData = value.tooltipData
+          // console.log(this.chartData)
           let dataCopy = this.deepClone(this.chartData)
+          dataCopy.color = config.color
           dataCopy.xAxis = value.dataCopy_xAxis
           dataCopy.series = value.dataCopy_series
           dataCopy.legend.data = value.dataCopy_legend_data

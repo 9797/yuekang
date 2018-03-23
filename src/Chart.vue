@@ -60,6 +60,7 @@ export default {
     this.get('./config.json').then((data) => {
       const config = JSON.parse(data)
       this.serverIP = config.server
+      this.mockData.color = config.color
       // 请求数据文件
       this.get(this.serverIP + data.countTime).then((data) => {
         let xData = []
