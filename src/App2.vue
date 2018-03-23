@@ -319,7 +319,7 @@ export default {
           }
         })
       })
-      const dataLenhth = checkList.length
+      const dataLength = checkList.length
       let dataIndex = 0
       let xAxisMax = 0
       let chartServerData = []
@@ -362,7 +362,7 @@ export default {
             if (count > xAxisMax) xAxisMax = count
             // 如果数据是最后一个 那么刷新图表
             // console.log(dataIndex)
-            if (++dataIndex === dataLenhth) {
+            if (++dataIndex === dataLength) {
               // 生成坐标轴
               const xAxis = Array(xAxisMax).fill(0).map((v, i) => { return (i / 60).toFixed(1) + '小时' })
               console.log(xAxis)
@@ -397,14 +397,14 @@ export default {
         } else {
           // 增加计数器
           dataIndex++
-          // console.log(dataIndex, dataLenhth)
+          // console.log(dataIndex, dataLength)
           let saveData = dataSave[element[0] + '&&' + element[1]]
           // 增加表格列表
           this.tableList.push(element[0] + '&&' + element[1])
           if (saveData.count > xAxisMax) xAxisMax = parseInt(saveData.count)
           chartServerData = chartServerData.concat(saveData.data)
           console.log(chartServerData)
-          if (dataIndex === dataLenhth) {
+          if (dataIndex === dataLength) {
             // 生成坐标轴
             // console.log(xAxisMax)
             const xAxis = Array(xAxisMax).fill(0).map((v, i) => { return (i / 60).toFixed(1) + '小时' })

@@ -57,12 +57,11 @@ export default {
   },
   created () {
     // 请求配置文件
-    this.get('./config.json').then((data) => {
-      const config = JSON.parse(data)
+    this.get('./config.json').then((config) => {
       this.serverIP = config.server
       this.mockData.color = config.color
       // 请求数据文件
-      this.get(this.serverIP + data.countTime).then((data) => {
+      this.get(this.serverIP + config.countTime).then((data) => {
         let xData = []
         let series = [
           {
