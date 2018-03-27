@@ -58,13 +58,14 @@ export default {
       dataList: null,
       tableTitle: '',
       // 数据请求服务器地址
-      serverIP: 'http://127.0.0.1',
+      serverIP: 'http://192.168.1.113',
       // 粒度设置
       granularity: 10,
       tableList: [],
       tableData: null,
       odbcDataUrl: '/odbcData.php',
       odbcListUrl: '/odbc.php',
+      contentUrl: '/content.php',
       chartData: {
         "title": {
           "text": "北京悦康药业", 
@@ -183,12 +184,14 @@ export default {
   created () {
     this.get('./config.json').then((config) => {
       this.serverIP = config.server
-      this.odbcListUrl = config.odbcListUrl      
+      this.odbcListUrl = config.odbcListUrl
       this.granularity = config.granularity
       this.odbcDataUrl = config.odbcDataUrl
+      this.contentUrl = config.contentUrl
       this.chartData.color = config.color
       colorList = config.color
       localforage.getItem('data', (err, value) => {
+        // console.log(value)
         if (!err && value) {
           // 从缓存中取出数据
           dataSave = value.dataSave
@@ -304,7 +307,10 @@ export default {
       }
     },
     updateData (e) {
-      // 判断是否选中
+      console.log(e)
+      // 保存列表 不知道有用吗
+      this.dataList = e.checkedList
+      // console.log(this.dataList)
       const checkList = []
       // 判断是否超过时间
       // if (new Date().getTime() >= 1517673600 * 1000) { return }
@@ -331,7 +337,7 @@ export default {
         // console.log(element)
         // 判断数据是否不存在
         // console.log(this.dataSave[element[0] + '&&' + element[1]])
-        console.log(element[0] + '&&' + element[1])
+        // console.log(element[0] + '&&' + element[1])
         if (!dataSave[element[0] + '&&' + element[1]]) {
           console.log('向后端请求数据')
           const dataName = element[1]
@@ -365,7 +371,7 @@ export default {
             if (++dataIndex === dataLength) {
               // 生成坐标轴
               const xAxis = Array(xAxisMax).fill(0).map((v, i) => { return (i / 60).toFixed(1) + '小时' })
-              console.log(xAxis)
+              // console.log(xAxis)
               dataCopy.xAxis[0].data =  this.gl(xAxis, this.granularity)
               dataCopy.series = chartServerData
               // 生成图例
@@ -389,6 +395,7 @@ export default {
                 dataCopy_series: chartServerData,
                 dataCopy_legend_data: dataCopy.legend.data
               }
+              // console.log(saveData)
               localforage.setItem('data', saveData, (err) => {
                 if (err) console.error(err)
               })
@@ -403,15 +410,15 @@ export default {
           this.tableList.push(element[0] + '&&' + element[1])
           if (saveData.count > xAxisMax) xAxisMax = parseInt(saveData.count)
           chartServerData = chartServerData.concat(saveData.data)
-          console.log(chartServerData)
+          // console.log(chartServerData)
           if (dataIndex === dataLength) {
             // 生成坐标轴
             // console.log(xAxisMax)
             const xAxis = Array(xAxisMax).fill(0).map((v, i) => { return (i / 60).toFixed(1) + '小时' })
-            console.log(xAxis.toString())
-            console.log(xAxis)
+            // console.log(xAxis.toString())
+            // console.log(xAxis)
             dataCopy.xAxis[0].data = this.gl(xAxis, this.granularity)
-            console.log(dataCopy.xAxis[0].data)
+            // console.log(dataCopy.xAxis[0].data)
             // console.log(chartServerData)
             dataCopy.series = chartServerData
             // 生成图例
@@ -423,6 +430,17 @@ export default {
             // console.log(dataCopy)
             this.$refs.chart.chart.setOption(dataCopy, true)
           }
+          // 保存数据
+          localforage.getItem('data', (err, value) => {
+            value.dataList = this.dataList
+            // 如果列表是取消事件 那么将对应的数据删掉不进行保存
+            if (!e.checked) {
+              value.dataList.remove(dataSave[element[0] + '&&' + element[1]])
+            }
+            localforage.setItem('data', value, (err) => {
+              if (err) console.error(err)
+            })
+          })
         }
       })
     },
@@ -445,7 +463,7 @@ export default {
       // 增加到表格标题
       this.tableTitle = data[1]
       const sendData = { class: data[0], name: data[1] }
-      this.post('./content.php', JSON.stringify(sendData), (response) => {
+      this.post(this.serverIP + this.contentUrl, JSON.stringify(sendData), (response) => {
         if (response && JSON.stringify(response) !== '{}') {
           let saveData = [ [" "], ["开始时间"], ["结束时间"], ["总用时"], ["占比"] ]
           const totalTime = new Date(response["总批次"].endTime).getTime() - new Date(response["总批次"].startTime).getTime()
